@@ -1,9 +1,10 @@
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class philosophers {
-    static boolean[] chopsticks;
+    static AtomicBoolean[] chopsticks;
     philosopherThread[] dinnerTable = null;
 
     public class philosopherThread extends Thread{
@@ -28,11 +29,11 @@ public class philosophers {
 
             while(true) {
                 // When we check this condition, it means we are hungry and want the chopsticks
-                if (chopsticks[leftChopstick] && chopsticks[rightChopstick]) {
+                if (chopsticks[leftChopstick].get() && chopsticks[rightChopstick].get()) {
 
                     synchronized (chopsticks) {
-                        chopsticks[leftChopstick] = false;
-                        chopsticks[rightChopstick] = false;
+                        chopsticks[leftChopstick].set(false);
+                        chopsticks[rightChopstick].set(false);
                     }
                     System.out.println("Philosopher " + this.seatNumber + " is eating");
 
@@ -42,8 +43,8 @@ public class philosophers {
                     } catch (Exception e) {}
 
                     synchronized (chopsticks) {
-                        chopsticks[leftChopstick] = true;
-                        chopsticks[rightChopstick] = true;
+                        chopsticks[leftChopstick].set(true);
+                        chopsticks[rightChopstick].set(true);
                     }
                     System.out.println("Philosopher " + this.seatNumber + " is done eating and is now thinking");
 
@@ -69,8 +70,10 @@ public class philosophers {
         System.out.print("Enter how many philosophers and chopsticks you want: ");
         int n = scan.nextInt();
 
-        chopsticks = new boolean[n];
-        Arrays.fill(chopsticks, true);      // value of true means the chopstick is available to use
+        chopsticks = new AtomicBoolean[n];  // value of true means the chopstick is available to use
+        for (int i = 0; i < chopsticks.length; i++) {
+            chopsticks[i] = new AtomicBoolean(true);
+        }
 
         philosophers x = new philosophers();
         x.startThreads(n);
